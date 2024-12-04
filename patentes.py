@@ -1,4 +1,5 @@
-from PIL import Image, ImageDraw, ImageFont
+import cv2
+import numpy as np
 import random
 
 # Función para generar un texto de patente
@@ -12,31 +13,38 @@ def generar_patente():
 
 # Función para generar la imagen de la patente
 def generar_imagen_patente(patente, nombre_archivo="patente.png"):
-    # Crear un lienzo en blanco
-    ancho, alto = 480, 130  # Dimensiones aproximadas de la patente
-    imagen = Image.new("RGB", (ancho, alto), "white")
-    draw = ImageDraw.Draw(imagen)
+    # Crear un lienzo en blanco (480x130 pixeles, fondo blanco)
+    ancho, alto = 480, 130
+    imagen = np.ones((alto, ancho, 3), dtype=np.uint8) * 255  # Fondo blanco
 
-    # Colores y estilos
-    color_texto = "black"
-    color_fondo_superior = (0, 51, 153)  # Azul oscuro
-    fuente_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    fuente_texto = ImageFont.truetype(fuente_path, 60)
-    fuente_superior = ImageFont.truetype(fuente_path, 16)
+    # Colores
+    color_texto = (0, 0, 0)  # Negro (BGR)
+    color_fondo_superior = (0, 51, 153)  # Azul oscuro (BGR)
 
-    # Dibujar el fondo superior
-    draw.rectangle([0, 0, ancho, 35], fill=color_fondo_superior)
-    draw.text((ancho//3.6, 10), "REPUBLICA ARGENTINA", fill="white", font=fuente_superior) # centrar mejor
+    # Cargar la fuente (asegurate de tener la fuente adecuada en tu sistema)
+    # OpenCV usa fuentes predeterminadas o fuentes que tengas en tu sistema
+    fuente_texto = cv2.FONT_HERSHEY_SIMPLEX
+    fuente_superior = cv2.FONT_HERSHEY_SIMPLEX
 
-    # Dibujar el texto de la patente
-    w_texto, h_texto = draw.textbbox((0, 0), patente, font=fuente_texto)[2:]
-    draw.text(((ancho - w_texto) / 2, (alto - h_texto) / 2 + 10), patente, fill=color_texto, font=fuente_texto)
+    # Dibujar el fondo superior (rectángulo azul)
+    cv2.rectangle(imagen, (0, 0), (ancho, 35), color_fondo_superior, -1)
+
+    # Añadir texto "REPUBLICA ARGENTINA"
+    cv2.putText(imagen, "REPUBLICA ARGENTINA", (ancho // 3, 10), fuente_superior, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+    # Calcular el tamaño del texto de la patente para centrarlo
+    (w_texto, h_texto), _ = cv2.getTextSize(patente, fuente_texto, 2, 2)
+
+    # Dibujar el texto de la patente centrado en la imagen
+    x_texto = (ancho - w_texto) // 2
+    y_texto = (alto + h_texto) // 2
+    cv2.putText(imagen, patente, (x_texto, y_texto), fuente_texto, 2, color_texto, 2, cv2.LINE_AA)
 
     # Añadir borde negro
-    draw.rectangle([0, 0, ancho -1, alto -1], outline="black", width=6)
+    cv2.rectangle(imagen, (0, 0), (ancho - 1, alto - 1), (0, 0, 0), 3)
 
     # Guardar la imagen
-    imagen.save(nombre_archivo)
+    cv2.imwrite(nombre_archivo, imagen)
     print(f"Patente generada y guardada como {nombre_archivo}")
 
 # Ejemplo de uso
